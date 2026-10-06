@@ -1,5 +1,7 @@
 import type { Translator } from './ports';
 
+const REQUEST_TIMEOUT_MS = 8000;
+
 export const SYSTEM_PROMPT =
   'You are a live interpreter for a video call. Translate the Brazilian Portuguese text inside ' +
   '<fragment> into natural, casual spoken English. Output only the English translation, never ' +
@@ -18,6 +20,7 @@ export class ClaudeTranslator implements Translator {
     const f = this.cfg.fetchFn ?? fetch;
     const res = await f('https://api.anthropic.com/v1/messages', {
       method: 'POST',
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       headers: {
         'content-type': 'application/json',
         'x-api-key': this.cfg.apiKey,

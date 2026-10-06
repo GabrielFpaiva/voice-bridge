@@ -12,13 +12,16 @@ interface Graph {
 
 let graph: Graph | null = null;
 let translating = false;
+let activeMicCleanup: (() => void) | null = null;
 const scheduler = new AudioScheduler();
 const realGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
 
 function getGraph(): Graph {
   if (graph) return graph;
   const ctx = new AudioContext();
-  graph = { ctx, micGain: ctx.createGain(), bus: ctx.createGain() };
+  const micGain = ctx.createGain();
+  micGain.gain.value = translating ? 0 : 1;
+  graph = { ctx, micGain, bus: ctx.createGain() };
   return graph;
 }
 
@@ -43,26 +46,34 @@ function attachMic(g: Graph, stream: MediaStream): () => void {
 navigator.mediaDevices.getUserMedia = async (constraints?: MediaStreamConstraints) => {
   if (!constraints?.audio) return realGetUserMedia(constraints);
   const real = await realGetUserMedia(constraints);
-  const g = getGraph();
-  void g.ctx.resume();
+  try {
+    const g = getGraph();
+    void g.ctx.resume();
 
-  const dest = g.ctx.createMediaStreamDestination();
-  g.micGain.connect(dest);
-  g.bus.connect(dest);
-  const cleanupMic = attachMic(g, new MediaStream(real.getAudioTracks()));
+    const dest = g.ctx.createMediaStreamDestination();
+    g.micGain.connect(dest);
+    g.bus.connect(dest);
+    activeMicCleanup?.();
+    const cleanupMic = attachMic(g, new MediaStream(real.getAudioTracks()));
+    activeMicCleanup = cleanupMic;
 
-  const outTrack = dest.stream.getAudioTracks()[0];
-  const originalStop = outTrack.stop.bind(outTrack);
-  outTrack.stop = () => {
-    originalStop();
-    cleanupMic();
-    g.micGain.disconnect(dest);
-    g.bus.disconnect(dest);
-  };
+    const outTrack = dest.stream.getAudioTracks()[0];
+    const originalStop = outTrack.stop.bind(outTrack);
+    outTrack.stop = () => {
+      originalStop();
+      cleanupMic();
+      if (activeMicCleanup === cleanupMic) activeMicCleanup = null;
+      g.micGain.disconnect(dest);
+      g.bus.disconnect(dest);
+    };
 
-  const out = new MediaStream([outTrack]);
-  real.getVideoTracks().forEach((v) => out.addTrack(v));
-  return out;
+    const out = new MediaStream([outTrack]);
+    real.getVideoTracks().forEach((v) => out.addTrack(v));
+    return out;
+  } catch (err) {
+    console.warn('[voice-bridge] could not build audio graph, passing the real mic through', err);
+    return real;
+  }
 };
 
 function setMode(on: boolean): void {

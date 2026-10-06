@@ -7,6 +7,8 @@ export type SttMessage =
   | { kind: 'error'; message: string }
   | { kind: 'other' };
 
+const ERROR_TYPES = new Set(['quota_exceeded', 'rate_limited']);
+
 export function sttUrl(token: string): string {
   const q = new URLSearchParams({
     model_id: 'scribe_v2_realtime',
@@ -32,7 +34,7 @@ export function parseSttMessage(raw: string): SttMessage {
   const type = String(m.message_type ?? '');
   if (type === 'partial_transcript') return { kind: 'partial', text: String(m.text ?? '') };
   if (type === 'committed_transcript') return { kind: 'committed', text: String(m.text ?? '') };
-  if (type === 'error' || type.endsWith('_error')) {
+  if (type === 'error' || type.endsWith('_error') || ERROR_TYPES.has(type)) {
     return { kind: 'error', message: String(m.error ?? m.message ?? type) };
   }
   return { kind: 'other' };
@@ -41,6 +43,7 @@ export function parseSttMessage(raw: string): SttMessage {
 export async function fetchScribeToken(apiKey: string, fetchFn: typeof fetch = fetch): Promise<string> {
   const res = await fetchFn('https://api.elevenlabs.io/v1/single-use-token/realtime_scribe', {
     method: 'POST',
+    signal: AbortSignal.timeout(8000),
     headers: { 'xi-api-key': apiKey },
   });
   if (!res.ok) throw new Error(`stt token ${res.status}`);
@@ -63,10 +66,14 @@ export class ElevenStt implements Stt {
 
   async connect(): Promise<void> {
     const token = await fetchScribeToken(this.apiKey);
+    if (this.closing) return;
     await new Promise<void>((resolve, reject) => {
       const ws = new WebSocket(sttUrl(token));
       this.ws = ws;
-      ws.onopen = () => resolve();
+      ws.onopen = () => {
+        if (this.closing) ws.close();
+        resolve();
+      };
       ws.onerror = () => reject(new Error('stt socket error'));
       ws.onclose = (ev) => {
         if (!this.closing) this.errorCb(new Error(`stt closed ${ev.code}`));

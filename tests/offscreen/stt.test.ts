@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { audioMessage, fetchScribeToken, parseSttMessage, sttUrl } from '../../src/offscreen/stt';
+import { describe, expect, it, vi } from 'vitest';
+import { audioMessage, ElevenStt, fetchScribeToken, parseSttMessage, sttUrl } from '../../src/offscreen/stt';
 
 describe('stt protocol', () => {
   it('builds the realtime url with token, pt and vad commit', () => {
@@ -41,5 +41,28 @@ describe('stt protocol', () => {
   it('throws when the token request fails', async () => {
     const fakeFetch = (async () => ({ ok: false, status: 401 })) as unknown as typeof fetch;
     await expect(fetchScribeToken('KEY', fakeFetch)).rejects.toThrow('401');
+  });
+
+  it('treats quota_exceeded and rate_limited as errors', () => {
+    expect(parseSttMessage('{"message_type":"quota_exceeded","error":"no credits"}')).toEqual({ kind: 'error', message: 'no credits' });
+    expect(parseSttMessage('{"message_type":"rate_limited"}')).toEqual({ kind: 'error', message: 'rate_limited' });
+  });
+
+  it('does not open a socket when closed before the token arrives', async () => {
+    let resolveToken!: (v: unknown) => void;
+    const tokenResponse = new Promise((r) => (resolveToken = r));
+    const sockets: unknown[] = [];
+    vi.stubGlobal('fetch', () => tokenResponse);
+    vi.stubGlobal('WebSocket', function (this: unknown) { sockets.push(this); });
+    try {
+      const stt = new ElevenStt('KEY');
+      const connecting = stt.connect();
+      stt.close();
+      resolveToken({ ok: true, json: async () => ({ token: 't' }) });
+      await connecting;
+      expect(sockets).toHaveLength(0);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });

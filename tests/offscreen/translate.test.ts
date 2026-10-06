@@ -38,4 +38,14 @@ describe('translator', () => {
     const t = new ClaudeTranslator({ apiKey: 'K', model: 'm1', fetchFn: fakeFetch });
     await expect(t.translate('x', [])).rejects.toThrow('529');
   });
+
+  it('aborts a hung request instead of waiting forever', async () => {
+    let signal: AbortSignal | undefined;
+    const fakeFetch = (async (_url: string, init: RequestInit) => {
+      signal = init.signal as AbortSignal;
+      return { ok: true, json: async () => ({ content: [] }) };
+    }) as unknown as typeof fetch;
+    await new ClaudeTranslator({ apiKey: 'K', model: 'm1', fetchFn: fakeFetch }).translate('x', []);
+    expect(signal).toBeInstanceOf(AbortSignal);
+  });
 });

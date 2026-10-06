@@ -22,6 +22,14 @@ async function showCaption(text: string): Promise<void> {
   }, 5000);
 }
 
+// If the extension is reloaded or updated mid-call this content script is orphaned and
+// chrome.runtime.id disappears: hand the real mic back so the user is not left muted.
+const orphanWatch = window.setInterval(() => {
+  if (chrome.runtime?.id) return;
+  window.clearInterval(orphanWatch);
+  window.postMessage({ __vb: 'ext', msg: { type: 'mode', translating: false } satisfies TabMsg }, location.origin);
+}, 1000);
+
 window.addEventListener('message', (e) => {
   if (e.source !== window || e.data?.__vb !== 'page') return;
   chrome.runtime.sendMessage({ to: 'offscreen', type: 'mic', pcm: e.data.pcm }).catch(() => {});
