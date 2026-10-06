@@ -40,12 +40,14 @@ Content script com `world: "MAIN"` e `run_at: document_start` substitui `navigat
 Três conexões abertas desde que a extensão é ligada, cada uma em módulo próprio (`stt`, `translate`, `tts`):
 
 1. **STT:** PCM do microfone → ElevenLabs Scribe Realtime → texto parcial.
-2. **Tradução:** acumulador fecha um pedaço em pontuação ou ~5 palavras estáveis. O pedaço segue para o Claude Haiku 4.5 junto com as 2–3 frases anteriores como contexto; a resposta vem em streaming.
-3. **TTS:** tokens em inglês entram no WebSocket do ElevenLabs TTS (modelo Flash, voz clonada em inglês). O áudio PCM volta em pedaços pequenos para a página.
+2. **Tradução:** acumulador fecha um pedaço em pontuação ou ~5 palavras estáveis. O pedaço segue para o Claude Haiku 4.5 junto com as 3 frases anteriores como contexto. A resposta vem inteira (sem streaming de tokens: o TTS só começa a gerar com `flush`, então streamar não reduz o atraso em pedaços tão curtos).
+3. **TTS:** o inglês de cada pedaço entra no WebSocket do ElevenLabs TTS com `flush` (modelo Flash, voz clonada em inglês). O áudio PCM volta em pedaços pequenos para a página.
+
+Detalhes de API: o STT usa token de uso único (`POST /v1/single-use-token/realtime_scribe`, expira em 15 min) porque o WebSocket do navegador não envia header; o offscreen document só tem `chrome.runtime`, então as configurações chegam pela mensagem `start`.
 
 Regras de atraso:
 - Cada etapa começa ao receber o primeiro pedaço da anterior.
-- A fila de áudio toca em ritmo normal e acelera (1,1x) se o atraso acumulado passar de ~1 s.
+- A fila de áudio toca em ritmo normal e acelera (1,1x) se o áudio agendado e ainda não tocado passar de ~2,5 s. (O TTS gera mais rápido que o tempo real, então um limite de 1 s aceleraria a fala normal; o valor é ajustável e se calibra no teste manual.)
 - Se o Gabriel falar de novo com áudio ainda tocando, o inglês novo entra na fila; o que já está saindo não é interrompido.
 - Conexões ficam abertas o tempo todo (sem custo de reabrir a cada frase).
 
