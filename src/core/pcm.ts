@@ -14,7 +14,7 @@ export function downsampleTo16k(input: Float32Array, inRate: number): Int16Array
   return out;
 }
 
-export function int16ToFloat32(pcm: Int16Array): Float32Array {
+export function int16ToFloat32(pcm: Int16Array): Float32Array<ArrayBuffer> {
   const out = new Float32Array(pcm.length);
   for (let i = 0; i < pcm.length; i++) out[i] = pcm[i] < 0 ? pcm[i] / 32768 : pcm[i] / 32767;
   return out;

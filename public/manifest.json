@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "Voice Bridge",
+  "version": "0.1.0",
+  "description": "Traduz sua fala PT -> EN em tempo real no Google Meet, com a sua voz.",
+  "permissions": ["storage", "offscreen"],
+  "host_permissions": [
+    "https://meet.google.com/*",
+    "https://api.elevenlabs.io/*",
+    "https://api.anthropic.com/*"
+  ],
+  "background": { "service_worker": "background.js" },
+  "action": { "default_title": "Voice Bridge" },
+  "options_page": "options.html",
+  "commands": {
+    "toggle": {
+      "suggested_key": { "default": "Alt+T" },
+      "description": "Liga/desliga a tradução"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://meet.google.com/*"],
+      "js": ["page.js"],
+      "world": "MAIN",
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://meet.google.com/*"],
+      "js": ["relay.js"],
+      "run_at": "document_start"
+    }
+  ]
+}
