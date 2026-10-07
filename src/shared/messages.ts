@@ -11,5 +11,6 @@ export type ToOffscreen =
   | { to: 'offscreen'; type: 'mic'; pcm: string };
 
 export type ToBackground =
+  | { to: 'background'; type: 'toggle'; tab?: { id: number; url?: string } }
   | { to: 'background'; type: 'event'; event: 'connecting' | 'connected' | 'error' }
   | { to: 'background'; type: 'forward'; msg: TabMsg };

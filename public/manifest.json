@@ -10,8 +10,7 @@
     "https://api.anthropic.com/*"
   ],
   "background": { "service_worker": "background.js" },
-  "action": { "default_title": "Voice Bridge" },
-  "options_page": "options.html",
+  "action": { "default_title": "Voice Bridge", "default_popup": "popup.html" },
   "commands": {
     "toggle": {
       "suggested_key": { "default": "Alt+T" },

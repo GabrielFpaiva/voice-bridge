@@ -59,7 +59,7 @@ async function stopAll(): Promise<void> {
   sendToOffscreen({ to: 'offscreen', type: 'stop' });
 }
 
-async function toggle(tab?: chrome.tabs.Tab): Promise<void> {
+async function toggle(tab?: { id?: number; url?: string }): Promise<void> {
   const saved = await getSaved();
   if (saved.status !== 'off') {
     await stopAll();
@@ -67,17 +67,12 @@ async function toggle(tab?: chrome.tabs.Tab): Promise<void> {
   }
   if (!tab?.id || !tab.url?.startsWith(MEET)) return;
   const settings = await loadSettings();
-  if (missingKeys(settings).length) {
-    await chrome.runtime.openOptionsPage();
-    return;
-  }
+  if (missingKeys(settings).length) return;
   await setSaved({ status: 'off', tabId: tab.id });
   await apply({ type: 'toggle' });
   await ensureOffscreen();
   sendToOffscreen({ to: 'offscreen', type: 'start', settings });
 }
-
-chrome.action.onClicked.addListener((tab) => void toggle(tab));
 
 chrome.commands.onCommand.addListener(async (command, tab) => {
   if (command !== 'toggle') return;
@@ -88,7 +83,9 @@ chrome.commands.onCommand.addListener(async (command, tab) => {
 chrome.runtime.onMessage.addListener((raw: ToBackground) => {
   if (raw?.to !== 'background') return;
   void (async () => {
-    if (raw.type === 'event') {
+    if (raw.type === 'toggle') {
+      await toggle(raw.tab);
+    } else if (raw.type === 'event') {
       const map = { connecting: 'retry', connected: 'connected', error: 'error' } as const;
       await apply({ type: map[raw.event] });
     } else if (raw.type === 'forward') {

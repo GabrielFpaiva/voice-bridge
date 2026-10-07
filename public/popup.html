@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Voice Bridge</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <main>
+    <header>
+      <h1>voice bridge</h1>
+      <span class="tag">pt → en</span>
+    </header>
+
+    <button id="byte" class="byte" data-status="off" aria-label="Ligar tradução">
+      <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+    </button>
+    <p id="status" class="status" aria-live="polite">Desligado</p>
+    <p id="hint" class="hint"></p>
+
+    <form id="form" autocomplete="off">
+      <label>Chave ElevenLabs <input id="elevenKey" type="password" spellcheck="false" /></label>
+      <label>Chave Anthropic <input id="anthropicKey" type="password" spellcheck="false" /></label>
+      <label>ID da voz (inglês) <input id="voiceId" type="text" spellcheck="false" /></label>
+      <label>Modelo de tradução <input id="model" type="text" spellcheck="false" /></label>
+      <label class="check"><input id="captions" type="checkbox" /> Mostrar legenda em inglês</label>
+    </form>
+    <p id="saved" class="saved" aria-live="polite"></p>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>

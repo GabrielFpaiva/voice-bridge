@@ -6,11 +6,11 @@ Extensão do Chrome (uso pessoal) que traduz sua fala PT -> EN no Google Meet, c
 
 1. `npm install && npm run build`
 2. `chrome://extensions` -> Modo do desenvolvedor -> Carregar sem compactação -> pasta `dist/`
-3. Abra as opções da extensão e preencha: chave ElevenLabs, chave Anthropic, ID da voz clonada (inglês).
+3. Clique no ícone da extensão e preencha, no próprio popup: chave ElevenLabs, chave Anthropic, ID da voz clonada (inglês). Salva sozinho.
 
 ## Usar
 
-Entre numa reunião do Meet e aperte `Alt+T` (ou clique no ícone). Selo verde `ON` = traduzindo. De novo para desligar.
+Entre numa reunião do Meet e aperte `Alt+T`, ou abra o popup e clique nos bits. Selo verde `ON` = traduzindo. De novo para desligar.
 
 ## Roteiro de teste manual
 

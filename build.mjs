@@ -6,7 +6,7 @@ const entries = {
   page: 'src/page/inject.ts',
   relay: 'src/content/relay.ts',
   offscreen: 'src/offscreen/index.ts',
-  options: 'src/options/index.ts',
+  popup: 'src/popup/index.ts',
 };
 
 const options = {

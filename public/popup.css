@@ -1,0 +1,113 @@
+:root {
+  --lcd: #cfd8b0;
+  --lcd-dim: #b9c595;
+  --ink: #1f2b1d;
+  --mid: #5d7a45;
+  --alert: #8c2f2f;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  width: 320px;
+  background: var(--lcd);
+  color: var(--ink);
+  font: 13px/1.5 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+main { padding: 16px; }
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 14px;
+}
+
+h1 { margin: 0; font-size: 14px; font-weight: 700; }
+.tag { color: var(--mid); }
+
+.byte {
+  display: flex;
+  gap: 5px;
+  width: 100%;
+  padding: 12px;
+  background: var(--lcd-dim);
+  border: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  cursor: pointer;
+}
+.byte:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+.byte:disabled { opacity: 0.55; cursor: not-allowed; box-shadow: none; }
+.byte:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+.byte i {
+  flex: 1;
+  aspect-ratio: 1;
+  background: var(--lcd);
+  border: 2px solid var(--ink);
+}
+
+@keyframes flow { 0%, 49% { background: var(--ink); } 50%, 100% { background: var(--lcd); } }
+@keyframes fill { 0%, 49% { background: var(--lcd); } 50%, 100% { background: var(--mid); } }
+
+.byte[data-status="translating"] i { animation: flow 1.2s steps(1) infinite; }
+.byte[data-status="connecting"] i { animation: fill 1.6s steps(1) infinite; }
+.byte[data-status="failed"] i { border-color: var(--alert); }
+.byte[data-status="failed"] i:nth-child(odd) { background: var(--alert); }
+
+.byte i:nth-child(2) { animation-delay: 0.15s; }
+.byte i:nth-child(3) { animation-delay: 0.3s; }
+.byte i:nth-child(4) { animation-delay: 0.45s; }
+.byte i:nth-child(5) { animation-delay: 0.6s; }
+.byte i:nth-child(6) { animation-delay: 0.75s; }
+.byte i:nth-child(7) { animation-delay: 0.9s; }
+.byte i:nth-child(8) { animation-delay: 1.05s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .byte i { animation: none !important; }
+  .byte[data-status="translating"] i { background: var(--ink); }
+  .byte[data-status="connecting"] i:nth-child(-n + 4) { background: var(--mid); }
+}
+
+.status { margin: 12px 0 0; font-weight: 700; }
+.hint { margin: 2px 0 0; color: var(--mid); min-height: 2.9em; }
+
+form {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 2px dotted var(--ink);
+}
+
+label { display: block; margin-bottom: 10px; }
+
+input[type="password"],
+input[type="text"] {
+  display: block;
+  width: 100%;
+  margin-top: 3px;
+  padding: 6px 8px;
+  background: var(--lcd-dim);
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  border-radius: 0;
+  font: inherit;
+}
+input:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+.check { display: flex; align-items: center; gap: 8px; margin-bottom: 0; cursor: pointer; }
+input[type="checkbox"] {
+  appearance: none;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  background: var(--lcd-dim);
+  border: 2px solid var(--ink);
+  cursor: pointer;
+}
+input[type="checkbox"]:checked { background: var(--ink); }
+input[type="checkbox"]:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+.saved { margin: 8px 0 0; min-height: 1.5em; color: var(--mid); text-align: right; }
