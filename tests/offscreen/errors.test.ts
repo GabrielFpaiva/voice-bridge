@@ -50,4 +50,24 @@ describe('diagnose', () => {
       'Conexão caiu: tts closed 1006',
     );
   });
+
+  it('stops retrying on a Anthropic 400 and says why when credits ran out', () => {
+    const d = diagnose(new Error('translate 400: Your credit balance is too low to access the Anthropic API.'));
+    expect(d.fatal).toBe(true);
+    expect(d.message).toContain('créditos');
+    expect(d.message).toContain('Anthropic');
+  });
+
+  it('stops retrying on any other Anthropic 400 and keeps the server reason', () => {
+    const d = diagnose(new Error('translate 400: model: String should have at least 1 character'));
+    expect(d.fatal).toBe(true);
+    expect(d.message).toContain('recusou');
+    expect(d.message).toContain('model');
+    expect(diagnose(new Error('translate 400')).fatal).toBe(true);
+  });
+
+  it('does not blame the key tail for a non-key Anthropic 400', () => {
+    const keys = { elevenKey: 'sk_aaaa1234', anthropicKey: 'sk-ant-zzzz9876' };
+    expect(describeFailure(new Error('translate 400: credit balance is too low'), keys)).not.toContain('chave …');
+  });
 });

@@ -48,4 +48,14 @@ describe('translator', () => {
     await new ClaudeTranslator({ apiKey: 'K', model: 'm1', fetchFn: fakeFetch }).translate('x', []);
     expect(signal).toBeInstanceOf(AbortSignal);
   });
+
+  it('puts the API error message in the thrown error', async () => {
+    const fakeFetch = (async () => ({
+      ok: false,
+      status: 400,
+      json: async () => ({ type: 'error', error: { type: 'invalid_request_error', message: 'credit balance is too low' } }),
+    })) as unknown as typeof fetch;
+    const t = new ClaudeTranslator({ apiKey: 'K', model: 'm1', fetchFn: fakeFetch });
+    await expect(t.translate('x', [])).rejects.toThrow('translate 400: credit balance is too low');
+  });
 });
