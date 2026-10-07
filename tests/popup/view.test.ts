@@ -28,6 +28,9 @@ describe('describeStatus', () => {
     expect(describeStatus('connecting', true, []).label).toBe('Conectando…');
     expect(describeStatus('translating', true, []).label).toBe('Traduzindo PT → EN');
     expect(describeStatus('failed', true, []).label).toBe('Conexão caiu');
-    expect(describeStatus('failed', true, []).hint).toContain('microfone voltou');
+    expect(describeStatus('failed', true, []).hint).toContain('voltou ao normal');
+    for (const s of ['off', 'connecting', 'translating', 'failed'] as const) {
+      expect(describeStatus(s, true, []).hint.length).toBeLessThanOrEqual(42);
+    }
   });
 });
