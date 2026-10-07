@@ -80,7 +80,12 @@ form {
   border-top: 2px dotted var(--ink);
 }
 
-label { display: block; margin-bottom: 10px; }
+label { display: block; }
+.field { margin-bottom: 12px; }
+
+.help { margin: 4px 0 0; font-size: 11px; line-height: 1.4; color: var(--mid); }
+.help a { color: var(--ink); text-decoration: underline; text-underline-offset: 2px; }
+.help a:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
 input[type="password"],
 input[type="text"] {
@@ -96,7 +101,7 @@ input[type="text"] {
 }
 input:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
-.check { display: flex; align-items: center; gap: 8px; margin-bottom: 0; cursor: pointer; }
+.check { display: flex; align-items: center; gap: 8px; cursor: pointer; }
 input[type="checkbox"] {
   appearance: none;
   flex: none;

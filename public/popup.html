@@ -19,10 +19,21 @@
     <p id="hint" class="hint"></p>
 
     <form id="form" autocomplete="off">
-      <label>Chave ElevenLabs <input id="elevenKey" type="password" spellcheck="false" /></label>
-      <label>Chave Anthropic <input id="anthropicKey" type="password" spellcheck="false" /></label>
-      <label>ID da voz (inglês) <input id="voiceId" type="text" spellcheck="false" /></label>
-      <label>Modelo de tradução <input id="model" type="text" spellcheck="false" /></label>
+      <div class="field">
+        <label>Chave ElevenLabs <input id="elevenKey" type="password" spellcheck="false" /></label>
+        <p class="help">Crie em <a href="https://elevenlabs.io/app/settings/api-keys" target="_blank" rel="noreferrer">elevenlabs.io → Developers → API Keys</a>. Se limitar as permissões, libere Speech to Text e Text to Speech.</p>
+      </div>
+      <div class="field">
+        <label>Chave Anthropic <input id="anthropicKey" type="password" spellcheck="false" /></label>
+        <p class="help">Crie em <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noreferrer">console.anthropic.com → Settings → API keys</a>.</p>
+      </div>
+      <div class="field">
+        <label>ID da voz (inglês) <input id="voiceId" type="text" spellcheck="false" /></label>
+        <p class="help">No ElevenLabs, abra <a href="https://elevenlabs.io/app/voices" target="_blank" rel="noreferrer">Voices</a>, clique na sua voz clonada e copie o ID.</p>
+      </div>
+      <div class="field">
+        <label>Modelo de tradução <input id="model" type="text" spellcheck="false" /></label>
+      </div>
       <label class="check"><input id="captions" type="checkbox" /> Mostrar legenda em inglês</label>
     </form>
     <p id="saved" class="saved" aria-live="polite"></p>
