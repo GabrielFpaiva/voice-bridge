@@ -8,6 +8,13 @@ describe('diagnose', () => {
     }
   });
 
+  it('tells the user when they pasted the key ID instead of the key', () => {
+    const d = diagnose(new Error("stt token 400: API key ID used as API key - only valid API keys can be used."));
+    expect(d.fatal).toBe(true);
+    expect(d.message).toContain('ID da chave');
+    expect(d.message).toContain('sk_');
+  });
+
   it('treats Anthropic auth errors as fatal and names the right key', () => {
     expect(diagnose(new Error('translate 401'))).toEqual({ fatal: true, message: 'Chave da Anthropic inválida.' });
   });

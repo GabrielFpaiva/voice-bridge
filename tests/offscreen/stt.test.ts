@@ -38,6 +38,15 @@ describe('stt protocol', () => {
     expect(seen!.init.method).toBe('POST');
   });
 
+  it('includes the server message when the token request fails', async () => {
+    const fakeFetch = (async () => ({
+      ok: false,
+      status: 400,
+      json: async () => ({ detail: { message: 'API key ID used as API key' } }),
+    })) as unknown as typeof fetch;
+    await expect(fetchScribeToken('KEY', fakeFetch)).rejects.toThrow('400: API key ID used as API key');
+  });
+
   it('throws when the token request fails', async () => {
     const fakeFetch = (async () => ({ ok: false, status: 401 })) as unknown as typeof fetch;
     await expect(fetchScribeToken('KEY', fakeFetch)).rejects.toThrow('401');

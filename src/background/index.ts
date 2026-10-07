@@ -86,6 +86,8 @@ chrome.runtime.onMessage.addListener((raw: ToBackground) => {
   void (async () => {
     if (raw.type === 'toggle') {
       await toggle(raw.tab);
+    } else if (raw.type === 'reset') {
+      await stopAll();
     } else if (raw.type === 'event') {
       const map = { connecting: 'retry', connected: 'connected', error: 'error' } as const;
       await apply({ type: map[raw.event] }, raw.detail);

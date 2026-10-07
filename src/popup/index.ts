@@ -1,7 +1,7 @@
 import type { Status } from '../core/state';
 import type { ToBackground } from '../shared/messages';
 import { DEFAULTS, loadSettings, MODELS, missingKeys, resolveModel, type Settings } from '../shared/settings';
-import { describeStatus, resetsAfterEdit } from './view';
+import { describeStatus, resetsAfterEdit, savedLabel } from './view';
 
 const el = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const byte = el<HTMLButtonElement>('byte');
@@ -61,14 +61,24 @@ byte.addEventListener('click', async () => {
   sendToggle();
 });
 
-el('form').addEventListener('change', async () => {
-  await saveForm();
-  if (resetsAfterEdit(status)) sendToggle();
-  el('saved').textContent = 'salvo';
-  clearTimeout(savedTimer);
-  savedTimer = setTimeout(() => (el('saved').textContent = ''), 1200);
-  render();
-});
+// Save on every edit: the popup can close (click outside) before a 'change' event ever fires.
+let editTimer: ReturnType<typeof setTimeout> | undefined;
+function onEdit(): void {
+  clearTimeout(editTimer);
+  editTimer = setTimeout(async () => {
+    await saveForm();
+    if (resetsAfterEdit(status)) {
+      const msg: ToBackground = { to: 'background', type: 'reset' };
+      chrome.runtime.sendMessage(msg).catch(() => {});
+    }
+    el('saved').textContent = savedLabel(settings.elevenKey);
+    clearTimeout(savedTimer);
+    savedTimer = setTimeout(() => (el('saved').textContent = ''), 2500);
+    render();
+  }, 150);
+}
+el('form').addEventListener('input', onEdit);
+el('form').addEventListener('change', onEdit);
 
 chrome.storage.onChanged.addListener(async (_changes, area) => {
   if (area !== 'session') return;

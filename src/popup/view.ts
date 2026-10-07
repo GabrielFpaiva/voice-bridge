@@ -6,6 +6,10 @@ export interface View {
   canToggle: boolean;
 }
 
+export function savedLabel(elevenKey: string): string {
+  return elevenKey ? `salvo · chave …${elevenKey.slice(-4)}` : 'salvo';
+}
+
 // A failure is almost always a bad setting: once the user edits one, drop the stale error.
 export function resetsAfterEdit(status: Status): boolean {
   return status === 'failed';

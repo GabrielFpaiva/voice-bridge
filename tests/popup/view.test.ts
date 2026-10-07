@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { describeStatus, resetsAfterEdit } from '../../src/popup/view';
+import { describeStatus, resetsAfterEdit, savedLabel } from '../../src/popup/view';
 
 describe('describeStatus', () => {
   it('blocks turning on while keys are missing', () => {
@@ -42,5 +42,11 @@ describe('describeStatus', () => {
   it('resets a failed state when the settings are edited, and leaves the others alone', () => {
     expect(resetsAfterEdit('failed')).toBe(true);
     for (const s of ['off', 'connecting', 'translating'] as const) expect(resetsAfterEdit(s)).toBe(false);
+  });
+
+  it('confirms a save with the tail of the stored ElevenLabs key', () => {
+    expect(savedLabel('sk_abcdefgh1234')).toBe('salvo · chave …1234');
+    expect(savedLabel('')).toBe('salvo');
+    expect(savedLabel('sk_abcdefgh1234')).not.toContain('abcdefgh');
   });
 });
