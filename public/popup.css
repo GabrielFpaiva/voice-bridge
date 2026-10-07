@@ -91,7 +91,8 @@ label { display: block; }
 .help a:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
 input[type="password"],
-input[type="text"] {
+input[type="text"],
+select {
   display: block;
   width: 100%;
   margin-top: 3px;
@@ -102,7 +103,9 @@ input[type="text"] {
   border-radius: 0;
   font: inherit;
 }
-input:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+select { cursor: pointer; }
+input:focus-visible,
+select:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
 .check { display: flex; align-items: center; gap: 8px; cursor: pointer; }
 input[type="checkbox"] {

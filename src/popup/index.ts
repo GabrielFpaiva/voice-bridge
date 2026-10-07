@@ -1,6 +1,6 @@
 import type { Status } from '../core/state';
 import type { ToBackground } from '../shared/messages';
-import { DEFAULTS, loadSettings, missingKeys, type Settings } from '../shared/settings';
+import { DEFAULTS, loadSettings, MODELS, missingKeys, resolveModel, type Settings } from '../shared/settings';
 import { describeStatus } from './view';
 
 const el = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -31,7 +31,7 @@ function readForm(): Settings {
     elevenKey: el<HTMLInputElement>('elevenKey').value.trim(),
     anthropicKey: el<HTMLInputElement>('anthropicKey').value.trim(),
     voiceId: el<HTMLInputElement>('voiceId').value.trim(),
-    model: el<HTMLInputElement>('model').value.trim() || DEFAULTS.model,
+    model: resolveModel(el<HTMLSelectElement>('model').value),
     captions: el<HTMLInputElement>('captions').checked,
   };
 }
@@ -40,7 +40,7 @@ function fillForm(s: Settings): void {
   el<HTMLInputElement>('elevenKey').value = s.elevenKey;
   el<HTMLInputElement>('anthropicKey').value = s.anthropicKey;
   el<HTMLInputElement>('voiceId').value = s.voiceId;
-  el<HTMLInputElement>('model').value = s.model;
+  el<HTMLSelectElement>('model').value = s.model;
   el<HTMLInputElement>('captions').checked = s.captions;
 }
 
@@ -65,7 +65,13 @@ chrome.storage.onChanged.addListener(async (_changes, area) => {
   render();
 });
 
+function fillModels(): void {
+  const select = el<HTMLSelectElement>('model');
+  for (const m of MODELS) select.add(new Option(m.label, m.id));
+}
+
 async function init(): Promise<void> {
+  fillModels();
   [settings, status] = await Promise.all([loadSettings(), readStatus()]);
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   meetTab = tab?.url?.startsWith(MEET) ? tab : undefined;
