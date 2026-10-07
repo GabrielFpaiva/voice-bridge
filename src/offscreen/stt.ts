@@ -51,8 +51,12 @@ export async function fetchScribeToken(apiKey: string, fetchFn: typeof fetch = f
     headers: { 'xi-api-key': apiKey },
   });
   if (!res.ok) {
-    const body = (await res.json().catch(() => null)) as { detail?: { message?: string } } | null;
-    const why = body?.detail?.message;
+    let why: string | undefined;
+    try {
+      why = ((await res.json()) as { detail?: { message?: string } }).detail?.message;
+    } catch {
+      // body missing or not JSON: report the status alone
+    }
     throw new Error(`stt token ${res.status}${why ? `: ${why}` : ''}`);
   }
   const json = (await res.json()) as { token: string };
