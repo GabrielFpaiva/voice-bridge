@@ -3,7 +3,7 @@ import { diagnose } from '../../src/offscreen/errors';
 
 describe('diagnose', () => {
   it('treats ElevenLabs auth errors as fatal', () => {
-    for (const m of ['Invalid API key', 'You must be authenticated to use this endpoint.', 'stt token 401']) {
+    for (const m of ['Invalid API key', 'You must be authenticated to use this endpoint.', 'stt token 401', 'stt token 400', 'stt token 403: API key is invalid.']) {
       expect(diagnose(new Error(m))).toEqual({ fatal: true, message: 'Chave do ElevenLabs inválida.' });
     }
   });

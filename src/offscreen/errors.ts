@@ -8,7 +8,7 @@ const MAX_RAW = 50;
 export function diagnose(err: Error): Diagnosis {
   const m = err.message;
   if (/^translate (401|403)/.test(m)) return { fatal: true, message: 'Chave da Anthropic inválida.' };
-  if (/invalid api key|invalid_api_key|authenticated|unauthorized|^stt token (401|403)/i.test(m)) {
+  if (/invalid api key|invalid_api_key|authenticated|unauthorized|^stt token (400|401|403)/i.test(m)) {
     return { fatal: true, message: 'Chave do ElevenLabs inválida.' };
   }
   if (/voice.*not.?found|voice_not_found|invalid_voice/i.test(m)) {
