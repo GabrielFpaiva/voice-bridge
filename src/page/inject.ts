@@ -67,6 +67,18 @@ navigator.mediaDevices.getUserMedia = async (constraints?: MediaStreamConstraint
       g.bus.disconnect(dest);
     };
 
+    const realTrack = real.getAudioTracks()[0];
+    if (realTrack) {
+      // Meet compares the track it gets back with the device it asked for; mirror the real one.
+      Object.defineProperty(outTrack, 'label', { value: realTrack.label });
+      const baseSettings = outTrack.getSettings.bind(outTrack);
+      outTrack.getSettings = () => ({ ...baseSettings(), ...realTrack.getSettings() });
+      realTrack.addEventListener('ended', () => {
+        originalStop();
+        outTrack.dispatchEvent(new Event('ended'));
+      });
+    }
+
     const out = new MediaStream([outTrack]);
     real.getVideoTracks().forEach((v) => out.addTrack(v));
     return out;
@@ -76,8 +88,18 @@ navigator.mediaDevices.getUserMedia = async (constraints?: MediaStreamConstraint
   }
 };
 
+function resumeContext(): void {
+  void graph?.ctx.resume();
+}
+
+// A context created before any click on the page starts suspended and stays silent (no
+// onaudioprocess, no output) until the page itself gets a user gesture.
+window.addEventListener('pointerdown', resumeContext, true);
+window.addEventListener('keydown', resumeContext, true);
+
 function setMode(on: boolean): void {
   translating = on;
+  if (on) resumeContext();
   if (!on) scheduler.reset();
   if (graph) graph.micGain.gain.setTargetAtTime(on ? 0 : 1, graph.ctx.currentTime, 0.01);
 }

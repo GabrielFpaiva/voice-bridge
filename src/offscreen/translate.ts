@@ -34,7 +34,15 @@ export class ClaudeTranslator implements Translator {
         messages: [{ role: 'user', content: buildUserPrompt(chunk, history) }],
       }),
     });
-    if (!res.ok) throw new Error(`translate ${res.status}`);
+    if (!res.ok) {
+      let why: string | undefined;
+      try {
+        why = ((await res.json()) as { error?: { message?: string } }).error?.message;
+      } catch {
+        // body missing or not JSON: report the status alone
+      }
+      throw new Error(`translate ${res.status}${why ? `: ${why}` : ''}`);
+    }
     const json = (await res.json()) as { content?: { text?: string }[] };
     return (json.content?.[0]?.text ?? '').trim();
   }

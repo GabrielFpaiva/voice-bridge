@@ -4,9 +4,12 @@ import type { Stt } from './ports';
 export type SttMessage =
   | { kind: 'partial'; text: string }
   | { kind: 'committed'; text: string }
+  | { kind: 'ready' }
   | { kind: 'error'; message: string }
   | { kind: 'other' };
 
+const OPEN_TIMEOUT_MS = 8000;
+const READY_GRACE_MS = 800;
 const ERROR_TYPES = new Set(['quota_exceeded', 'rate_limited']);
 
 export function sttUrl(token: string): string {
@@ -34,6 +37,7 @@ export function parseSttMessage(raw: string): SttMessage {
   const type = String(m.message_type ?? '');
   if (type === 'partial_transcript') return { kind: 'partial', text: String(m.text ?? '') };
   if (type === 'committed_transcript') return { kind: 'committed', text: String(m.text ?? '') };
+  if (type === 'session_started') return { kind: 'ready' };
   if (type === 'error' || type.endsWith('_error') || ERROR_TYPES.has(type)) {
     return { kind: 'error', message: String(m.error ?? m.message ?? type) };
   }
@@ -46,7 +50,15 @@ export async function fetchScribeToken(apiKey: string, fetchFn: typeof fetch = f
     signal: AbortSignal.timeout(8000),
     headers: { 'xi-api-key': apiKey },
   });
-  if (!res.ok) throw new Error(`stt token ${res.status}`);
+  if (!res.ok) {
+    let why: string | undefined;
+    try {
+      why = ((await res.json()) as { detail?: { message?: string } }).detail?.message;
+    } catch {
+      // body missing or not JSON: report the status alone
+    }
+    throw new Error(`stt token ${res.status}${why ? `: ${why}` : ''}`);
+  }
   const json = (await res.json()) as { token: string };
   return json.token;
 }
@@ -70,19 +82,38 @@ export class ElevenStt implements Stt {
     await new Promise<void>((resolve, reject) => {
       const ws = new WebSocket(sttUrl(token));
       this.ws = ws;
-      ws.onopen = () => {
-        if (this.closing) ws.close();
-        resolve();
+      let settled = false;
+      const settle = (err?: Error) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(openTimeout);
+        clearTimeout(grace);
+        if (err) reject(err);
+        else resolve();
       };
-      ws.onerror = () => reject(new Error('stt socket error'));
+      // The server accepts the socket first and reports bad keys right after, so wait for
+      // session_started (or a short quiet window after the socket opens) before calling this connected.
+      let grace: ReturnType<typeof setTimeout> | undefined;
+      const openTimeout = setTimeout(() => settle(new Error('stt open timeout')), OPEN_TIMEOUT_MS);
+      ws.onopen = () => {
+        clearTimeout(openTimeout);
+        grace = setTimeout(() => settle(), READY_GRACE_MS);
+        if (this.closing) ws.close();
+      };
+      ws.onerror = () => settle(new Error('stt socket error'));
       ws.onclose = (ev) => {
-        if (!this.closing) this.errorCb(new Error(`stt closed ${ev.code}`));
+        if (!settled) settle(this.closing ? undefined : new Error(`stt closed ${ev.code}`));
+        else if (!this.closing) this.errorCb(new Error(`stt closed ${ev.code}`));
       };
       ws.onmessage = (ev) => {
         const m = parseSttMessage(String(ev.data));
-        if (m.kind === 'partial') this.partialCb(m.text);
+        if (m.kind === 'ready') settle();
+        else if (m.kind === 'partial') this.partialCb(m.text);
         else if (m.kind === 'committed') this.committedCb(m.text);
-        else if (m.kind === 'error') this.errorCb(new Error(m.message));
+        else if (m.kind === 'error') {
+          if (!settled) settle(new Error(m.message));
+          else this.errorCb(new Error(m.message));
+        }
       };
     });
   }

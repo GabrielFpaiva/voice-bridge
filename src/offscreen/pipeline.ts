@@ -2,6 +2,7 @@ import { Chunker } from '../core/chunker';
 import type { Stt, Translator, Tts } from './ports';
 
 export interface PipelineOutput {
+  heard?(text: string): void;
   audio(pcm: Int16Array): void;
   caption(text: string): void;
   failed(err: Error): void;
@@ -21,7 +22,10 @@ export class Pipeline {
     private tts: Tts,
     private out: PipelineOutput,
   ) {
-    stt.onPartial((t) => this.enqueue(this.chunker.push(t)));
+    stt.onPartial((t) => {
+      this.out.heard?.(t);
+      this.enqueue(this.chunker.push(t));
+    });
     stt.onCommitted((t) => this.enqueue(this.chunker.commit(t)));
     stt.onError((e) => this.fail(e));
     tts.onError((e) => this.fail(e));
