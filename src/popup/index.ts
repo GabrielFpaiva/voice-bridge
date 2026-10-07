@@ -62,21 +62,23 @@ byte.addEventListener('click', async () => {
   sendToggle();
 });
 
-// Save on every edit: the popup can close (click outside) before a 'change' event ever fires.
-let editTimer: ReturnType<typeof setTimeout> | undefined;
+// Apply and persist every edit right away: the popup can close (click outside) before a
+// 'change' event fires, and the toggle must reflect what was just typed, not the last save.
 function onEdit(): void {
-  clearTimeout(editTimer);
-  editTimer = setTimeout(async () => {
-    await saveForm();
-    if (resetsAfterEdit(status)) {
-      const msg: ToBackground = { to: 'background', type: 'reset' };
-      chrome.runtime.sendMessage(msg).catch(() => {});
-    }
-    el('saved').textContent = savedLabel(settings.elevenKey);
-    clearTimeout(savedTimer);
-    savedTimer = setTimeout(() => (el('saved').textContent = ''), 2500);
-    render();
-  }, 150);
+  settings = readForm();
+  render();
+  void persistEdit();
+}
+
+async function persistEdit(): Promise<void> {
+  await chrome.storage.local.set(settings);
+  if (resetsAfterEdit(status)) {
+    const msg: ToBackground = { to: 'background', type: 'reset' };
+    chrome.runtime.sendMessage(msg).catch(() => {});
+  }
+  el('saved').textContent = savedLabel(settings.elevenKey);
+  clearTimeout(savedTimer);
+  savedTimer = setTimeout(() => (el('saved').textContent = ''), 2500);
 }
 el('form').addEventListener('input', onEdit);
 el('form').addEventListener('change', onEdit);
