@@ -23,7 +23,7 @@ describe('stt protocol', () => {
     expect(parseSttMessage('{"message_type":"partial_transcript","text":"oi"}')).toEqual({ kind: 'partial', text: 'oi' });
     expect(parseSttMessage('{"message_type":"committed_transcript","text":"oi."}')).toEqual({ kind: 'committed', text: 'oi.' });
     expect(parseSttMessage('{"message_type":"auth_error","error":"bad key"}')).toEqual({ kind: 'error', message: 'bad key' });
-    expect(parseSttMessage('{"message_type":"session_started"}')).toEqual({ kind: 'other' });
+    expect(parseSttMessage('{"message_type":"something_else"}')).toEqual({ kind: 'other' });
   });
 
   it('fetches a single-use token with the api key header', async () => {
@@ -41,6 +41,10 @@ describe('stt protocol', () => {
   it('throws when the token request fails', async () => {
     const fakeFetch = (async () => ({ ok: false, status: 401 })) as unknown as typeof fetch;
     await expect(fetchScribeToken('KEY', fakeFetch)).rejects.toThrow('401');
+  });
+
+  it('recognises session_started as ready', () => {
+    expect(parseSttMessage('{"message_type":"session_started","session_id":"s"}')).toEqual({ kind: 'ready' });
   });
 
   it('treats quota_exceeded and rate_limited as errors', () => {

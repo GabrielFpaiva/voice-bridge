@@ -9,11 +9,12 @@ const MEET = 'https://meet.google.com/';
 
 let settings: Settings = DEFAULTS;
 let status: Status = 'off';
+let detail: string | undefined;
 let meetTab: chrome.tabs.Tab | undefined;
 let savedTimer: ReturnType<typeof setTimeout> | undefined;
 
 function render(): void {
-  const v = describeStatus(status, !!meetTab, missingKeys(settings));
+  const v = describeStatus(status, !!meetTab, missingKeys(settings), detail);
   byte.dataset.status = status;
   byte.disabled = !v.canToggle;
   byte.setAttribute('aria-label', status === 'off' ? 'Ligar tradução' : 'Desligar tradução');
@@ -21,9 +22,9 @@ function render(): void {
   el('hint').textContent = v.hint;
 }
 
-async function readStatus(): Promise<Status> {
+async function readStatus(): Promise<void> {
   const { vb } = await chrome.storage.session.get({ vb: { status: 'off' } });
-  return (vb as { status: Status }).status;
+  ({ status, detail } = vb as { status: Status; detail?: string });
 }
 
 function readForm(): Settings {
@@ -61,7 +62,7 @@ el('form').addEventListener('change', async () => {
 
 chrome.storage.onChanged.addListener(async (_changes, area) => {
   if (area !== 'session') return;
-  status = await readStatus();
+  await readStatus();
   render();
 });
 
@@ -72,7 +73,7 @@ function fillModels(): void {
 
 async function init(): Promise<void> {
   fillModels();
-  [settings, status] = await Promise.all([loadSettings(), readStatus()]);
+  [settings] = await Promise.all([loadSettings(), readStatus()]);
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   meetTab = tab?.url?.startsWith(MEET) ? tab : undefined;
   fillForm(settings);

@@ -7,6 +7,7 @@ const MEET = 'https://meet.google.com/';
 interface Saved {
   status: Status;
   tabId?: number;
+  detail?: string;
 }
 
 async function getSaved(): Promise<Saved> {
@@ -33,10 +34,10 @@ function sendToTab(tabId: number | undefined, msg: TabMsg): void {
   if (tabId !== undefined) chrome.tabs.sendMessage(tabId, { to: 'tab', ...msg }).catch(() => {});
 }
 
-async function apply(event: StateEvent): Promise<Saved> {
+async function apply(event: StateEvent, detail?: string): Promise<Saved> {
   const saved = await getSaved();
   const status = next(saved.status, event);
-  const updated = { ...saved, status };
+  const updated = { ...saved, status, detail: status === 'failed' ? (detail ?? saved.detail) : undefined };
   await setSaved(updated);
   await chrome.action.setBadgeText({ text: BADGE[status].text });
   await chrome.action.setBadgeBackgroundColor({ color: BADGE[status].color });
@@ -87,7 +88,7 @@ chrome.runtime.onMessage.addListener((raw: ToBackground) => {
       await toggle(raw.tab);
     } else if (raw.type === 'event') {
       const map = { connecting: 'retry', connected: 'connected', error: 'error' } as const;
-      await apply({ type: map[raw.event] });
+      await apply({ type: map[raw.event] }, raw.detail);
     } else if (raw.type === 'forward') {
       sendToTab((await getSaved()).tabId, raw.msg);
     }

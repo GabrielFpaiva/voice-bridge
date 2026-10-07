@@ -1,6 +1,9 @@
 import { base64ToPcm16 } from '../core/pcm';
 import type { Tts } from './ports';
 
+const OPEN_TIMEOUT_MS = 8000;
+const READY_GRACE_MS = 700;
+
 export type TtsMessage = { audio?: Int16Array; final?: boolean; error?: string };
 
 export function ttsUrl(voiceId: string): string {
@@ -49,19 +52,37 @@ export class ElevenTts implements Tts {
     return new Promise<void>((resolve, reject) => {
       const ws = new WebSocket(ttsUrl(this.cfg.voiceId));
       this.ws = ws;
+      let settled = false;
+      const settle = (err?: Error) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(openTimeout);
+        clearTimeout(grace);
+        if (err) reject(err);
+        else resolve();
+      };
+      // Bad keys and unknown voices are reported right after the first message, so hold the
+      // "connected" signal for a short quiet window after the socket opens.
+      let grace: ReturnType<typeof setTimeout> | undefined;
+      const openTimeout = setTimeout(() => settle(new Error('tts open timeout')), OPEN_TIMEOUT_MS);
       ws.onopen = () => {
+        clearTimeout(openTimeout);
+        grace = setTimeout(() => settle(), READY_GRACE_MS);
         ws.send(bosMessage(this.cfg.apiKey));
         this.keepAlive = setInterval(() => ws.send(JSON.stringify({ text: ' ' })), 15000);
-        resolve();
       };
-      ws.onerror = () => reject(new Error('tts socket error'));
+      ws.onerror = () => settle(new Error('tts socket error'));
       ws.onclose = (ev) => {
-        if (!this.closing) this.errorCb(new Error(`tts closed ${ev.code}`));
+        if (!settled) settle(this.closing ? undefined : new Error(`tts closed ${ev.code}`));
+        else if (!this.closing) this.errorCb(new Error(`tts closed ${ev.code}`));
       };
       ws.onmessage = (ev) => {
         const m = parseTtsMessage(String(ev.data));
         if (m.audio) this.audioCb(m.audio);
-        if (m.error) this.errorCb(new Error(m.error));
+        if (m.error) {
+          if (!settled) settle(new Error(m.error));
+          else this.errorCb(new Error(m.error));
+        }
       };
     });
   }

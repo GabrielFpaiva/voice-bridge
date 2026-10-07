@@ -12,5 +12,5 @@ export type ToOffscreen =
 
 export type ToBackground =
   | { to: 'background'; type: 'toggle'; tab?: { id: number; url?: string } }
-  | { to: 'background'; type: 'event'; event: 'connecting' | 'connected' | 'error' }
+  | { to: 'background'; type: 'event'; event: 'connecting' | 'connected' | 'error'; detail?: string }
   | { to: 'background'; type: 'forward'; msg: TabMsg };

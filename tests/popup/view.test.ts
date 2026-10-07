@@ -24,6 +24,11 @@ describe('describeStatus', () => {
     }
   });
 
+  it('shows the failure detail instead of the generic hint when there is one', () => {
+    expect(describeStatus('failed', true, [], 'Chave do ElevenLabs inválida.').hint).toBe('Chave do ElevenLabs inválida.');
+    expect(describeStatus('translating', true, [], 'ignored').hint).not.toBe('ignored');
+  });
+
   it('describes each active state', () => {
     expect(describeStatus('connecting', true, []).label).toBe('Conectando…');
     expect(describeStatus('translating', true, []).label).toBe('Traduzindo PT → EN');
