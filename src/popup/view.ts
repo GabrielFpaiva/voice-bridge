@@ -6,6 +6,11 @@ export interface View {
   canToggle: boolean;
 }
 
+// A failure is almost always a bad setting: once the user edits one, drop the stale error.
+export function resetsAfterEdit(status: Status): boolean {
+  return status === 'failed';
+}
+
 export function describeStatus(status: Status, onMeet: boolean, missing: string[], detail?: string): View {
   switch (status) {
     case 'connecting':

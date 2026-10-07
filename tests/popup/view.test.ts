@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { describeStatus } from '../../src/popup/view';
+import { describeStatus, resetsAfterEdit } from '../../src/popup/view';
 
 describe('describeStatus', () => {
   it('blocks turning on while keys are missing', () => {
@@ -37,5 +37,10 @@ describe('describeStatus', () => {
     for (const s of ['off', 'connecting', 'translating', 'failed'] as const) {
       expect(describeStatus(s, true, []).hint.length).toBeLessThanOrEqual(42);
     }
+  });
+
+  it('resets a failed state when the settings are edited, and leaves the others alone', () => {
+    expect(resetsAfterEdit('failed')).toBe(true);
+    for (const s of ['off', 'connecting', 'translating'] as const) expect(resetsAfterEdit(s)).toBe(false);
   });
 });

@@ -1,7 +1,7 @@
 import type { Status } from '../core/state';
 import type { ToBackground } from '../shared/messages';
 import { DEFAULTS, loadSettings, MODELS, missingKeys, resolveModel, type Settings } from '../shared/settings';
-import { describeStatus } from './view';
+import { describeStatus, resetsAfterEdit } from './view';
 
 const el = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const byte = el<HTMLButtonElement>('byte');
@@ -45,15 +45,25 @@ function fillForm(s: Settings): void {
   el<HTMLInputElement>('captions').checked = s.captions;
 }
 
-byte.addEventListener('click', () => {
+function sendToggle(): void {
   const tab = meetTab?.id === undefined ? undefined : { id: meetTab.id, url: meetTab.url };
   const msg: ToBackground = { to: 'background', type: 'toggle', tab };
   chrome.runtime.sendMessage(msg).catch(() => {});
+}
+
+async function saveForm(): Promise<void> {
+  settings = readForm();
+  await chrome.storage.local.set(settings);
+}
+
+byte.addEventListener('click', async () => {
+  await saveForm();
+  sendToggle();
 });
 
 el('form').addEventListener('change', async () => {
-  settings = readForm();
-  await chrome.storage.local.set(settings);
+  await saveForm();
+  if (resetsAfterEdit(status)) sendToggle();
   el('saved').textContent = 'salvo';
   clearTimeout(savedTimer);
   savedTimer = setTimeout(() => (el('saved').textContent = ''), 1200);
