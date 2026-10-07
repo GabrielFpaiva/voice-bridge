@@ -1,7 +1,7 @@
 import { base64ToPcm16, pcm16ToBase64 } from '../core/pcm';
 import type { ToBackground, ToOffscreen } from '../shared/messages';
 import type { Settings } from '../shared/settings';
-import { diagnose } from './errors';
+import { describeFailure, diagnose } from './errors';
 import { Pipeline } from './pipeline';
 import { ElevenStt } from './stt';
 import { ClaudeTranslator } from './translate';
@@ -38,7 +38,7 @@ async function start(settings: Settings): Promise<void> {
       failed: (err) => {
         console.warn('[voice-bridge] pipeline failed:', err.message);
         const d = diagnose(err);
-        send({ to: 'background', type: 'event', event: 'error', detail: d.message });
+        send({ to: 'background', type: 'event', event: 'error', detail: describeFailure(err, settings) });
         if (d.fatal) wanted = false;
         else scheduleRetry(settings);
       },

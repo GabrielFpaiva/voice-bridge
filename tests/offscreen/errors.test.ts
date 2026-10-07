@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { diagnose } from '../../src/offscreen/errors';
+import { describeFailure, diagnose } from '../../src/offscreen/errors';
 
 describe('diagnose', () => {
   it('treats ElevenLabs auth errors as fatal', () => {
@@ -26,5 +26,21 @@ describe('diagnose', () => {
 
   it('caps the raw reason so the popup does not overflow', () => {
     expect(diagnose(new Error('x'.repeat(300))).message.length).toBeLessThanOrEqual(80);
+  });
+
+  it('names the stage and the tail of the key that was actually used on key errors', () => {
+    const keys = { elevenKey: 'sk_aaaa1234', anthropicKey: 'sk-ant-zzzz9876' };
+    const e = describeFailure(new Error('stt token 400'), keys);
+    expect(e).toContain('Chave do ElevenLabs inválida.');
+    expect(e).toContain('stt token 400');
+    expect(e).toContain('…1234');
+    expect(e).not.toContain('sk_aaaa');
+    expect(describeFailure(new Error('translate 401'), keys)).toContain('…9876');
+  });
+
+  it('leaves transient failures as they are', () => {
+    expect(describeFailure(new Error('tts closed 1006'), { elevenKey: 'k', anthropicKey: 'k' })).toBe(
+      'Conexão caiu: tts closed 1006',
+    );
   });
 });

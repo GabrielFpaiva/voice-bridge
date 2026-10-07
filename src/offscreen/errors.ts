@@ -18,3 +18,10 @@ export function diagnose(err: Error): Diagnosis {
   const raw = m.length > MAX_RAW ? `${m.slice(0, MAX_RAW)}…` : m;
   return { fatal: false, message: `Conexão caiu: ${raw}` };
 }
+
+export function describeFailure(err: Error, keys: { elevenKey: string; anthropicKey: string }): string {
+  const d = diagnose(err);
+  if (!d.fatal) return d.message;
+  const key = err.message.startsWith('translate') ? keys.anthropicKey : keys.elevenKey;
+  return `${d.message} (${err.message.slice(0, 40)} · chave …${key.slice(-4)})`;
+}
