@@ -1,9 +1,11 @@
 :root {
-  --lcd: #cfd8b0;
-  --lcd-dim: #b9c595;
-  --ink: #1f2b1d;
-  --mid: #5d7a45;
-  --alert: #8c2f2f;
+  --lcd: #f1f7ff;
+  --lcd-dim: #dcebfb;
+  --ink: #0d1f3d;
+  --mid: #4d6f9e;
+  --accent: #009dff;
+  --accent2: #ff2e93;
+  --alert: #d6341f;
 }
 
 * { box-sizing: border-box; }
@@ -35,10 +37,10 @@ h1 { margin: 0; font-size: 14px; font-weight: 700; }
   padding: 12px;
   background: var(--lcd-dim);
   border: 2px solid var(--ink);
-  box-shadow: 3px 3px 0 var(--ink);
+  box-shadow: 3px 3px 0 var(--accent);
   cursor: pointer;
 }
-.byte:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+.byte:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--accent); }
 .byte:disabled { opacity: 0.55; cursor: not-allowed; box-shadow: none; }
 .byte:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 
@@ -49,8 +51,8 @@ h1 { margin: 0; font-size: 14px; font-weight: 700; }
   border: 2px solid var(--ink);
 }
 
-@keyframes flow { 0%, 49% { background: var(--ink); } 50%, 100% { background: var(--lcd); } }
-@keyframes fill { 0%, 49% { background: var(--lcd); } 50%, 100% { background: var(--mid); } }
+@keyframes flow { 0%, 49% { background: var(--accent); } 50%, 100% { background: var(--lcd); } }
+@keyframes fill { 0%, 49% { background: var(--lcd); } 50%, 100% { background: var(--accent2); } }
 
 .byte[data-status="translating"] i { animation: flow 1.2s steps(1) infinite; }
 .byte[data-status="connecting"] i { animation: fill 1.6s steps(1) infinite; }
@@ -67,8 +69,8 @@ h1 { margin: 0; font-size: 14px; font-weight: 700; }
 
 @media (prefers-reduced-motion: reduce) {
   .byte i { animation: none !important; }
-  .byte[data-status="translating"] i { background: var(--ink); }
-  .byte[data-status="connecting"] i:nth-child(-n + 4) { background: var(--mid); }
+  .byte[data-status="translating"] i { background: var(--accent); }
+  .byte[data-status="connecting"] i:nth-child(-n + 4) { background: var(--accent2); }
 }
 
 .status { margin: 12px 0 0; font-weight: 700; }
@@ -77,14 +79,14 @@ h1 { margin: 0; font-size: 14px; font-weight: 700; }
 form {
   margin-top: 14px;
   padding-top: 14px;
-  border-top: 2px dotted var(--ink);
+  border-top: 2px dotted var(--mid);
 }
 
 label { display: block; }
 .field { margin-bottom: 12px; }
 
 .help { margin: 4px 0 0; font-size: 11px; line-height: 1.4; color: var(--mid); }
-.help a { color: var(--ink); text-decoration: underline; text-underline-offset: 2px; }
+.help a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 2px; }
 .help a:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
 input[type="password"],
@@ -112,7 +114,7 @@ input[type="checkbox"] {
   border: 2px solid var(--ink);
   cursor: pointer;
 }
-input[type="checkbox"]:checked { background: var(--ink); }
+input[type="checkbox"]:checked { background: var(--accent); }
 input[type="checkbox"]:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
 .saved { margin: 8px 0 0; min-height: 1.5em; color: var(--mid); text-align: right; }
