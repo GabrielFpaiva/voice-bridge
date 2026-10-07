@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { describeStatus, resetsAfterEdit, savedLabel } from '../../src/popup/view';
+import { describeStatus, resetsAfterEdit, savedLabel, statsLine } from '../../src/popup/view';
 
 describe('describeStatus', () => {
   it('blocks turning on while keys are missing', () => {
@@ -48,5 +48,16 @@ describe('describeStatus', () => {
     expect(savedLabel('sk_abcdefgh1234')).toBe('salvo · chave …1234');
     expect(savedLabel('')).toBe('salvo');
     expect(savedLabel('sk_abcdefgh1234')).not.toContain('abcdefgh');
+  });
+
+  it('formats the stage counters so a stalled stage is easy to spot', () => {
+    expect(statsLine({ mic: 120, text: 5, translated: 3, voice: 40 })).toBe('mic 120 · texto 5 · trad 3 · voz 40');
+    expect(statsLine({ mic: 0, text: 0, translated: 0, voice: 0 }).length).toBeLessThanOrEqual(42);
+  });
+
+  it('shows the counters instead of the generic hint while translating', () => {
+    const c = { mic: 1, text: 2, translated: 3, voice: 4 };
+    expect(describeStatus('translating', true, [], undefined, c).hint).toBe(statsLine(c));
+    expect(describeStatus('translating', true, []).hint).toContain('Alt+T');
   });
 });

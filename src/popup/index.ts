@@ -1,5 +1,5 @@
 import type { Status } from '../core/state';
-import type { ToBackground } from '../shared/messages';
+import type { Counts, ToBackground } from '../shared/messages';
 import { DEFAULTS, loadSettings, MODELS, missingKeys, resolveModel, type Settings } from '../shared/settings';
 import { describeStatus, resetsAfterEdit, savedLabel } from './view';
 
@@ -10,11 +10,12 @@ const MEET = 'https://meet.google.com/';
 let settings: Settings = DEFAULTS;
 let status: Status = 'off';
 let detail: string | undefined;
+let stats: Counts | undefined;
 let meetTab: chrome.tabs.Tab | undefined;
 let savedTimer: ReturnType<typeof setTimeout> | undefined;
 
 function render(): void {
-  const v = describeStatus(status, !!meetTab, missingKeys(settings), detail);
+  const v = describeStatus(status, !!meetTab, missingKeys(settings), detail, stats);
   byte.dataset.status = status;
   byte.disabled = !v.canToggle;
   byte.setAttribute('aria-label', status === 'off' ? 'Ligar tradução' : 'Desligar tradução');
@@ -24,7 +25,7 @@ function render(): void {
 
 async function readStatus(): Promise<void> {
   const { vb } = await chrome.storage.session.get({ vb: { status: 'off' } });
-  ({ status, detail } = vb as { status: Status; detail?: string });
+  ({ status, detail, stats } = vb as { status: Status; detail?: string; stats?: Counts });
 }
 
 function readForm(): Settings {

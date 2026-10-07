@@ -39,12 +39,14 @@ function setup(translate?: Translator['translate']) {
   const captions: string[] = [];
   const audio: Int16Array[] = [];
   const failures: Error[] = [];
+  const heard: string[] = [];
   const pipeline = new Pipeline(stt, translator, tts, {
+    heard: (t) => heard.push(t),
     audio: (p) => audio.push(p),
     caption: (t) => captions.push(t),
     failed: (e) => failures.push(e),
   });
-  return { stt, tts, calls, captions, audio, failures, pipeline };
+  return { stt, tts, calls, captions, audio, failures, heard, pipeline };
 }
 
 describe('Pipeline', () => {
@@ -54,6 +56,13 @@ describe('Pipeline', () => {
     await f.pipeline.whenIdle();
     expect(f.tts.spoken).toEqual(['EN:Olá pessoal,']);
     expect(f.captions).toEqual(['EN:Olá pessoal,']);
+  });
+
+  it('reports every partial transcript it hears', () => {
+    const f = setup();
+    f.stt.partialCb('olá');
+    f.stt.partialCb('olá pessoal');
+    expect(f.heard).toEqual(['olá', 'olá pessoal']);
   });
 
   it('flushes the rest on committed transcript', async () => {

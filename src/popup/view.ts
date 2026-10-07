@@ -1,9 +1,14 @@
 import type { Status } from '../core/state';
+import type { Counts } from '../shared/messages';
 
 export interface View {
   label: string;
   hint: string;
   canToggle: boolean;
+}
+
+export function statsLine(c: Counts): string {
+  return `mic ${c.mic} · texto ${c.text} · trad ${c.translated} · voz ${c.voice}`;
 }
 
 export function savedLabel(elevenKey: string): string {
@@ -15,12 +20,12 @@ export function resetsAfterEdit(status: Status): boolean {
   return status === 'failed';
 }
 
-export function describeStatus(status: Status, onMeet: boolean, missing: string[], detail?: string): View {
+export function describeStatus(status: Status, onMeet: boolean, missing: string[], detail?: string, stats?: Counts): View {
   switch (status) {
     case 'connecting':
       return { label: 'Conectando…', hint: 'Microfone normal enquanto conecta.', canToggle: true };
     case 'translating':
-      return { label: 'Traduzindo PT → EN', hint: 'Toque nos bits ou Alt+T para desligar.', canToggle: true };
+      return { label: 'Traduzindo PT → EN', hint: stats ? statsLine(stats) : 'Toque nos bits ou Alt+T para desligar.', canToggle: true };
     case 'failed':
       return { label: 'Conexão caiu', hint: detail ?? 'Microfone voltou ao normal. Reconectando…', canToggle: true };
     case 'off':
